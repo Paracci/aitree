@@ -13,8 +13,8 @@ python -m pip install --upgrade paracci-aitree --quiet
 
 $pythonDir = Split-Path $pythonCmd.Source
 $sysScripts = Join-Path $pythonDir "Scripts"
-$userBase = (python -m site --user-base).Trim()
-$userScripts = Join-Path $userBase "Scripts"
+$userSite = (python -m site --user-site).Trim()
+$userScripts = Join-Path (Split-Path $userSite -Parent) "Scripts"
 
 $userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
 if (-not $userPath) { $userPath = "" }

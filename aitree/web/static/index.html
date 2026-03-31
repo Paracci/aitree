@@ -1,27 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AITree</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link id="hlCss" rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/styles/tokyo-night-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.10.0/highlight.min.js"></script>
 </head>
 
 <body>
 
     <header>
-        <div class="logo">🌳 AITree</div>
-        <div class="path-disp" id="pathDisp">—</div>
+        <div class="logo">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                <line x1="6" y1="2" x2="6" y2="4" />
+                <line x1="10" y1="2" x2="10" y2="4" />
+                <line x1="14" y1="2" x2="14" y2="4" />
+            </svg>
+            AITree
+        </div>
+        <div class="path-disp" id="pathDisp" title="">—</div>
+        <div class="header-gap"></div>
         <div class="info-disp" id="infoDisp"></div>
-        <div class="live-dot" title="Live reload active"></div>
+        <div class="live-pill" id="livePill" title="Live reload — polls every 2s">
+            <span class="live-dot"></span>live
+        </div>
+        <button class="btn-icon btn-theme" id="btnTheme" onclick="toggleTheme()" title="Toggle light/dark theme">
+            <svg id="iconSun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <svg id="iconMoon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" style="display:none">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+        </button>
     </header>
 
     <div class="app">
 
-        <!-- ── Sidebar ─────────────────────────────────────────────────── -->
-        <aside>
-
+        <!-- ── Sidebar ───────────────────────────────────────────────── -->
+        <aside id="sidebar">
             <div class="panel">
                 <div class="panel-title">Filters</div>
 
@@ -30,20 +63,22 @@
                     <input type="number" id="fDepth" placeholder="unlimited" min="1" max="20">
                 </div>
                 <div class="fr">
-                    <label>Include <small style="color:var(--text2)">(glob, comma-sep)</small></label>
+                    <label>Include <small>(glob, comma-sep)</small></label>
                     <input type="text" id="fInclude" placeholder="*.py, *.js">
                 </div>
                 <div class="fr">
-                    <label>Exclude <small style="color:var(--text2)">(glob, comma-sep)</small></label>
+                    <label>Exclude <small>(glob, comma-sep)</small></label>
                     <input type="text" id="fExclude" placeholder="*.test.*, build/*">
                 </div>
 
-                <label class="cb"><input type="checkbox" id="fGitChanged"><span>git-changed only</span></label>
-                <label class="cb"><input type="checkbox" id="fNoGitignore"><span>no-gitignore</span></label>
-                <label class="cb"><input type="checkbox" id="fTokens" onchange="applyFilters()"><span>show
-                        tokens</span></label>
+                <div class="checkbox-group">
+                    <label class="cb"><input type="checkbox" id="fGitChanged"><span>git-changed only</span></label>
+                    <label class="cb"><input type="checkbox" id="fNoGitignore"><span>no-gitignore</span></label>
+                    <label class="cb"><input type="checkbox" id="fTokens" onchange="applyFilters()"><span>show
+                            tokens</span></label>
+                </div>
 
-                <div class="fr" style="margin-top:8px">
+                <div class="fr" style="margin-top:10px">
                     <label>Format</label>
                     <select id="fFormat" onchange="onFormatChange()">
                         <option value="json">json (interactive)</option>
@@ -52,22 +87,114 @@
                     </select>
                 </div>
 
-                <button class="btn btn-primary mt" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-primary mt" onclick="applyFilters()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                    </svg>
+                    Apply Filters
+                </button>
             </div>
 
+            <div class="panel sidebar-shortcuts">
+                <div class="panel-title">Shortcuts</div>
+                <div class="shortcut-row"><kbd>/</kbd><span>Focus search</span></div>
+                <div class="shortcut-row"><kbd>Esc</kbd><span>Clear search</span></div>
+                <div class="shortcut-row"><kbd>Enter</kbd><span>Apply filters</span></div>
+            </div>
         </aside>
 
-        <!-- ── Main ───────────────────────────────────────────────────── -->
+        <div class="sidebar-resizer" id="sidebarResizer"></div>
+
+        <!-- ── Main ─────────────────────────────────────────────────── -->
         <div class="main">
 
             <div class="tabbar">
-                <button class="tab active" data-tab="tree">🌲 Tree</button>
-                <button class="tab" data-tab="stats">📊 Stats</button>
-                <button class="tab hidden" id="tab-file" data-tab="file">📄 File</button>
+                <button class="tab active" data-tab="tree">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round">
+                        <path d="M3 3v4" />
+                        <path d="M7 3H3v4h4V3z" fill="currentColor" stroke="none" opacity=".2" />
+                        <path d="M3 21V9" />
+                        <path d="M3 9h6v4H3" />
+                        <path d="M13 21v-8" />
+                        <path d="M13 13h4v4h-4V13z" fill="currentColor" stroke="none" opacity=".2" />
+                    </svg>
+                    Tree
+                </button>
+                <button class="tab" data-tab="stats">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round">
+                        <line x1="18" y1="20" x2="18" y2="10" />
+                        <line x1="12" y1="20" x2="12" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                    Stats
+                </button>
+                <button class="tab hidden" id="tab-file" data-tab="file">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span id="tabFileName">File</span>
+                </button>
                 <div class="tab-spacer"></div>
                 <div class="tab-actions">
-                    <button class="btn btn-sm" id="btnCopy" title="Copy tree">📋 Copy</button>
-                    <button class="btn btn-sm" onclick="applyFilters()" title="Refresh tree">↺</button>
+                    <button class="btn btn-sm" id="btnCopy" title="Copy tree as text">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" />
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                        </svg>
+                        Copy
+                    </button>
+                    <button class="btn btn-sm" onclick="applyFilters()" title="Refresh tree">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10" />
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tree toolbar: search + expand/collapse -->
+            <div class="tree-toolbar" id="treeToolbar">
+                <div class="search-wrap">
+                    <svg class="search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search files…   /">
+                    <button class="search-clear" id="searchClear" style="display:none" onclick="clearSearch()">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="3" stroke-linecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="tree-controls">
+                    <button class="btn-icon" onclick="expandAll()" title="Expand all">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <polyline points="15 3 21 3 21 9" />
+                            <polyline points="9 21 3 21 3 15" />
+                            <line x1="21" y1="3" x2="14" y2="10" />
+                            <line x1="3" y1="21" x2="10" y2="14" />
+                        </svg>
+                    </button>
+                    <button class="btn-icon" onclick="collapseAll()" title="Collapse all">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round">
+                            <polyline points="4 14 10 14 10 20" />
+                            <polyline points="20 10 14 10 14 4" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                            <line x1="3" y1="21" x2="14" y2="10" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
