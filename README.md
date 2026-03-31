@@ -31,7 +31,7 @@ webapp/
 
 **Via pip (recommended):**
 ```bash
-pip install ai-tree
+pip install paracci-aitree
 ```
 
 **One-liner (Linux / macOS):**
@@ -49,11 +49,11 @@ pip install .
 **Optional dependencies** — install only what you need:
 
 ```bash
-pip install "ai-tree[live]"    # --live mode  (watchdog)
-pip install "ai-tree[tokens]"  # --tokens     (tiktoken)
-pip install "ai-tree[git]"     # --git-changed (gitpython)
-pip install "ai-tree[mcp]"     # MCP server   (mcp)
-pip install "ai-tree[all]"     # everything + clipboard (pyperclip)
+pip install "paracci-aitree[live]"    # --live mode  (watchdog)
+pip install "paracci-aitree[tokens]"  # --tokens     (tiktoken)
+pip install "paracci-aitree[git]"     # --git-changed (gitpython)
+pip install "paracci-aitree[mcp]"     # MCP server   (mcp)
+pip install "paracci-aitree[all]"     # everything + clipboard (pyperclip)
 ```
 
 ---
@@ -157,7 +157,7 @@ AITree ships a [Model Context Protocol](https://modelcontextprotocol.io) server 
 
 ```bash
 # Install MCP dependency
-pip install "ai-tree[mcp]"
+pip install "paracci-aitree[mcp]"
 
 # Start the server
 aitree-mcp

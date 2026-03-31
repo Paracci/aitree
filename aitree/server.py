@@ -25,7 +25,7 @@ try:
 except ImportError as exc:
     raise SystemExit(
         "[ERROR] MCP server mode requires the 'mcp' package.\n"
-        "Install it with:  pip install 'ai-tree[mcp]'"
+        "Install it with:  pip install 'paracci-aitree[mcp]'"
     ) from exc
 
 from .core import (
@@ -205,7 +205,7 @@ def aitree_get_changed(
     List git-changed and untracked files in a repository.
 
     Returns a JSON array of relative file paths that are staged, unstaged,
-    or untracked. Requires gitpython ('pip install ai-tree[git]').
+    or untracked. Requires gitpython ('pip install paracci-aitree[git]').
     """
     root = Path(path).expanduser().resolve()
     if not root.exists():
@@ -216,7 +216,7 @@ def aitree_get_changed(
         return json.dumps({
             "error": (
                 "Not a git repository, or gitpython is not installed. "
-                "Install with:  pip install 'ai-tree[git]'"
+                "Install with:  pip install 'paracci-aitree[git]'"
             )
         })
 

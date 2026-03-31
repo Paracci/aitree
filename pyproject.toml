@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ai-tree"
+name = "paracci-aitree"
 version = "3.1.0"
 description = "Project file map generator for AI-assisted development"
 readme = "README.md"
