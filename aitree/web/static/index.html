@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AITree</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">🌳 AITree</div>
+        <div class="path-disp" id="pathDisp">—</div>
+        <div class="info-disp" id="infoDisp"></div>
+        <div class="live-dot" title="Live reload active"></div>
+    </header>
+
+    <div class="app">
+
+        <!-- ── Sidebar ─────────────────────────────────────────────────── -->
+        <aside>
+
+            <div class="panel">
+                <div class="panel-title">Filters</div>
+
+                <div class="fr">
+                    <label>Depth</label>
+                    <input type="number" id="fDepth" placeholder="unlimited" min="1" max="20">
+                </div>
+                <div class="fr">
+                    <label>Include <small style="color:var(--text2)">(glob, comma-sep)</small></label>
+                    <input type="text" id="fInclude" placeholder="*.py, *.js">
+                </div>
+                <div class="fr">
+                    <label>Exclude <small style="color:var(--text2)">(glob, comma-sep)</small></label>
+                    <input type="text" id="fExclude" placeholder="*.test.*, build/*">
+                </div>
+
+                <label class="cb"><input type="checkbox" id="fGitChanged"><span>git-changed only</span></label>
+                <label class="cb"><input type="checkbox" id="fNoGitignore"><span>no-gitignore</span></label>
+                <label class="cb"><input type="checkbox" id="fTokens" onchange="applyFilters()"><span>show
+                        tokens</span></label>
+
+                <div class="fr" style="margin-top:8px">
+                    <label>Format</label>
+                    <select id="fFormat" onchange="onFormatChange()">
+                        <option value="json">json (interactive)</option>
+                        <option value="text">text</option>
+                        <option value="markdown">markdown</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary mt" onclick="applyFilters()">Apply Filters</button>
+            </div>
+
+        </aside>
+
+        <!-- ── Main ───────────────────────────────────────────────────── -->
+        <div class="main">
+
+            <div class="tabbar">
+                <button class="tab active" data-tab="tree">🌲 Tree</button>
+                <button class="tab" data-tab="stats">📊 Stats</button>
+                <button class="tab hidden" id="tab-file" data-tab="file">📄 File</button>
+                <div class="tab-spacer"></div>
+                <div class="tab-actions">
+                    <button class="btn btn-sm" id="btnCopy" title="Copy tree">📋 Copy</button>
+                    <button class="btn btn-sm" onclick="applyFilters()" title="Refresh tree">↺</button>
+                </div>
+            </div>
+
+            <div id="content">
+                <div class="loading">
+                    <div class="spinner"></div> Loading…
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aitree"
+version = "3.1.0"
+description = "Project file map generator for AI-assisted development"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+keywords = ["ai", "developer-tools", "file-tree", "cli", "mcp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+
+[project.optional-dependencies]
+live    = ["watchdog>=4.0"]
+tokens  = ["tiktoken>=0.7"]
+git     = ["gitpython>=3.1"]
+mcp     = ["mcp>=1.0"]
+serve   = []
+all     = ["watchdog>=4.0", "tiktoken>=0.7", "gitpython>=3.1", "pyperclip>=1.8", "mcp>=1.0"]
+
+[project.scripts]
+aitree     = "aitree.__main__:main"
+aitree-mcp = "aitree.server:main"
+
+[project.urls]
+Homepage   = "https://github.com/paracci/aitree"
+Repository = "https://github.com/paracci/aitree"
+Issues     = "https://github.com/paracci/aitree/issues"
+
+[tool.setuptools.packages.find]
+where   = ["."]
+include = ["aitree*"]
+[tool.setuptools.package-data]
+"aitree.web.static" = ["*.js", "*.html", "*.css"]
