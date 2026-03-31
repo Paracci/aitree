@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "paracci-aitree"
-version = "3.2.0"
+version = "3.2.1"
 description = "Project file map generator for AI-assisted development"
 readme = "README.md"
 license = { text = "MIT" }
