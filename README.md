@@ -142,12 +142,15 @@ aitree . --serve --port 8080                # web UI on a custom port
 
 ## Web UI
 
-`--serve` launches a local web server and opens the tree in your browser.
+`--serve` launches a local web server and opens a professional, interactive explorer in your browser.
 
-- Interactive tree with collapse / expand
-- Filter panel: depth, include, exclude, git-changed
-- File content preview on click
-- Live reload when the directory changes
+- **Real-time Search**: Instant tree filtering with match highlighting.
+- **Syntax Highlighting**: Auto-detection for 30+ languages (via highlight.js).
+- **Themes**: Switch between Dark (Tokyo Night) and Light (GitHub) modes.
+- **File Preview**: Click any file to see content with line numbers and word-wrap.
+- **Interactive Tree**: Fast collapse/expand, depth control, and file-type icons.
+- **Live Reload**: UI auto-refreshes when your project files change.
+- **Responsive Layout**: Resizable sidebar and mobile-friendly design.
 
 ```bash
 aitree . --serve
