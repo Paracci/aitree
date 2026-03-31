@@ -39,6 +39,11 @@ pip install paracci-aitree
 curl -fsSL https://raw.githubusercontent.com/paracci/aitree/main/install.sh | bash
 ```
 
+**One-liner (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/paracci/aitree/main/install.ps1 | iex
+```
+
 **From source:**
 ```bash
 git clone https://github.com/paracci/aitree.git
