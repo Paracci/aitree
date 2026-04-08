@@ -4,6 +4,8 @@
 
 Scans a directory and prints a clean, annotated tree that you can paste directly into any AI chat. Instead of uploading your entire codebase, share the map first — then only send the files the AI actually asks for.
 
+**Live Demo: [paracci.github.io/aitree](https://paracci.github.io/aitree/)**
+
 ```
 webapp/
 ├── src/
