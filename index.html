@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AITree — Project File Map Generator for AI-Assisted Development</title>
+<meta name="description" content="Generate an annotated file tree in one command. Paste it into any AI chat. Stop uploading your entire codebase — let AI ask for exactly what it needs.">
+<meta property="og:title" content="AITree — Map your codebase. Feed AI only what it needs.">
+<meta property="og:description" content="CLI tool that generates annotated file trees for AI-assisted development. Works with Claude, Cursor, GPT-4 and more.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#09090f;
+  --bg2:#111118;
+  --bg3:#16161f;
+  --bg4:#1e1e2a;
+  --border:#252535;
+  --border2:#2e2e44;
+  --text:#e4e4f0;
+  --text2:#8888aa;
+  --text3:#4a4a6a;
+  --green:#00e87a;
+  --green2:#00a856;
+  --green3:rgba(0,232,122,.08);
+  --cyan:#00d4ff;
+  --yellow:#ffd166;
+  --red:#ff6b6b;
+  --glow:0 0 40px rgba(0,232,122,.15);
+  --glow2:0 0 80px rgba(0,232,122,.08);
+  --font-head:'Syne',sans-serif;
+  --font-code:'JetBrains Mono',monospace;
+  --font-body:'DM Sans',sans-serif;
+  --radius:6px;
+  --radius-lg:12px;
+}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:15px;
+  line-height:1.6;
+  overflow-x:hidden;
+}
+
+/* ── NOISE TEXTURE ── */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+  z-index:0;
+  opacity:.4;
+}
+
+/* ── TYPOGRAPHY ── */
+h1,h2,h3,h4{font-family:var(--font-head);line-height:1.15;letter-spacing:-.02em}
+code,pre,kbd,.mono{font-family:var(--font-code)}
+a{color:inherit;text-decoration:none}
+
+/* ── NAV ── */
+nav{
+  position:fixed;
+  top:0;left:0;right:0;
+  height:60px;
+  display:flex;align-items:center;
+  padding:0 clamp(20px,5vw,60px);
+  gap:32px;
+  z-index:100;
+  transition:background .3s,border-color .3s,backdrop-filter .3s;
+}
+nav.scrolled{
+  background:rgba(9,9,15,.85);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(16px);
+}
+.nav-logo{
+  display:flex;align-items:center;gap:9px;
+  font-family:var(--font-head);
+  font-weight:700;font-size:17px;
+  color:var(--text);
+  white-space:nowrap;
+}
+.nav-logo svg{flex-shrink:0}
+.nav-logo span{color:var(--green)}
+.nav-links{
+  display:flex;gap:4px;
+  margin-left:8px;
+}
+.nav-links a{
+  font-size:13.5px;color:var(--text2);
+  padding:6px 12px;border-radius:var(--radius);
+  transition:color .2s,background .2s;
+}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-gap{flex:1}
+.nav-actions{display:flex;gap:8px;align-items:center}
+.btn-ghost{
+  font-size:13px;font-family:var(--font-body);
+  color:var(--text2);padding:7px 14px;
+  border:1px solid var(--border2);
+  border-radius:var(--radius);cursor:pointer;
+  background:transparent;
+  display:flex;align-items:center;gap:6px;
+  transition:color .2s,border-color .2s,background .2s;
+  white-space:nowrap;
+}
+.btn-ghost:hover{color:var(--text);border-color:var(--text3);background:rgba(255,255,255,.04)}
+.btn-green{
+  font-size:13px;font-family:var(--font-body);font-weight:500;
+  color:#000;padding:7px 16px;
+  background:var(--green);
+  border:1px solid transparent;
+  border-radius:var(--radius);cursor:pointer;
+  display:flex;align-items:center;gap:6px;
+  transition:background .2s,box-shadow .2s;
+  white-space:nowrap;
+}
+.btn-green:hover{background:#00ff88;box-shadow:var(--glow)}
+
+/* Mobile nav */
+.nav-hamburger{
+  display:none;flex-direction:column;gap:4px;
+  cursor:pointer;padding:8px;
+  background:none;border:none;
+}
+.nav-hamburger span{
+  display:block;width:20px;height:2px;
+  background:var(--text2);border-radius:2px;
+  transition:all .25s;
+}
+.nav-mobile-menu{
+  display:none;position:fixed;
+  top:60px;left:0;right:0;
+  background:rgba(9,9,15,.97);
+  border-bottom:1px solid var(--border);
+  padding:16px 20px 20px;
+  backdrop-filter:blur(16px);
+  z-index:99;flex-direction:column;gap:4px;
+}
+.nav-mobile-menu.open{display:flex}
+.nav-mobile-menu a{
+  font-size:14px;color:var(--text2);
+  padding:10px 12px;border-radius:var(--radius);
+  transition:color .2s,background .2s;
+}
+.nav-mobile-menu a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-mobile-actions{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+
+/* ── HERO ── */
+.hero{
+  min-height:100vh;
+  display:flex;align-items:center;
+  padding:120px clamp(20px,5vw,60px) 80px;
+  position:relative;
+  overflow:hidden;
+}
+.hero-glow{
+  position:absolute;
+  top:-200px;right:-200px;
+  width:700px;height:700px;
+  background:radial-gradient(circle,rgba(0,232,122,.07) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-glow2{
+  position:absolute;
+  bottom:-100px;left:-100px;
+  width:500px;height:500px;
+  background:radial-gradient(circle,rgba(0,212,255,.04) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-inner{
+  max-width:1200px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:center;
+  width:100%;position:relative;z-index:1;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-code);font-size:11.5px;
+  color:var(--green);
+  background:var(--green3);
+  border:1px solid rgba(0,232,122,.2);
+  padding:5px 12px;border-radius:20px;
+  margin-bottom:24px;
+}
+.hero-badge .dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.hero h1{
+  font-size:clamp(38px,5vw,62px);
+  font-weight:800;
+  color:var(--text);
+  margin-bottom:22px;
+  line-height:1.1;
+}
+.hero h1 em{
+  font-style:normal;
+  color:var(--green);
+  position:relative;
+}
+.hero-sub{
+  font-size:17px;color:var(--text2);
+  line-height:1.7;margin-bottom:36px;
+  max-width:480px;
+}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:40px}
+.btn-hero-primary{
+  font-family:var(--font-code);font-size:13.5px;font-weight:600;
+  color:#000;
+  background:var(--green);
+  border:none;padding:12px 20px;
+  border-radius:var(--radius);cursor:pointer;
+  display:flex;align-items:center;gap:10px;
+  transition:background .2s,box-shadow .2s,transform .2s;
+  position:relative;overflow:hidden;
+}
+.btn-hero-primary::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(rgba(255,255,255,.1),transparent);
+  pointer-events:none;
+}
+.btn-hero-primary:hover{
+  background:#00ff88;
+  box-shadow:0 0 30px rgba(0,232,122,.4);
+  transform:translateY(-1px);
+}
+.btn-hero-primary .copy-icon{
+  opacity:.7;flex-shrink:0;
+  transition:opacity .2s;
+}
+.btn-hero-primary:hover .copy-icon{opacity:1}
+.btn-hero-secondary{
+  font-size:14px;color:var(--text2);
+  border:1px solid var(--border2);
+  padding:12px 20px;border-radius:var(--radius);cursor:pointer;
+  background:transparent;
+  display:flex;align-items:center;gap:8px;
+  transition:color .2s,border-color .2s,background .2s,transform .2s;
+}
+.btn-hero-secondary:hover{
+  color:var(--text);border-color:var(--text3);
+  background:rgba(255,255,255,.04);
+  transform:translateY(-1px);
+}
+.hero-trust{
+  display:flex;align-items:center;gap:10px;
+  font-size:12.5px;color:var(--text3);
+  flex-wrap:wrap;
+}
+.hero-trust-dot{width:3px;height:3px;border-radius:50%;background:var(--text3)}
+/* Terminal */
+.hero-terminal{
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.03);
+  position:relative;
+}
+.hero-terminal::before{
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:inherit;
+  background:linear-gradient(135deg,rgba(0,232,122,.15),transparent 50%,rgba(0,212,255,.08));
+  z-index:-1;
+  pointer-events:none;
+}
+.term-titlebar{
+  background:var(--bg3);
+  padding:11px 14px;
+  display:flex;align-items:center;gap:7px;
+  border-bottom:1px solid var(--border);
+}
+.term-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.term-dot.red{background:#ff5f57}
+.term-dot.yellow{background:#ffbd2e}
+.term-dot.green{background:#28c840}
+.term-title{
+  font-family:var(--font-code);
+  font-size:11.5px;color:var(--text3);
+  margin-left:4px;
+}
+.term-body{
+  padding:18px 20px 20px;
+  font-family:var(--font-code);
+  font-size:12.5px;
+  line-height:1.75;
+  min-height:320px;
+  color:var(--text2);
+}
+.term-prompt{color:var(--green);font-weight:600}
+.term-cmd{color:var(--text)}
+.term-dir{color:#7aa2f7}
+.term-branch{color:#7dcfff}
+.term-file{color:var(--text)}
+.term-size{color:var(--text3)}
+.term-comment{color:var(--text3)}
+.term-bar{color:#9ece6a}
+.term-ok{color:var(--green);font-weight:600}
+.term-info{color:var(--cyan)}
+.term-watch-ok{color:var(--green);font-weight:600}
+.term-ts{color:var(--text3)}
+.term-ev-change{color:var(--yellow);font-weight:600}
+.term-ev-add{color:var(--green);font-weight:600}
+.term-ev-del{color:var(--red);font-weight:600}
+.term-scene-dots{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:10px 14px;
+  border-top:1px solid var(--border);
+  background:var(--bg3);
+}
+.term-scene-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:var(--border2);
+  transition:background .35s,transform .35s;
+}
+.term-scene-dot.active{
+  background:var(--green);
+  transform:scale(1.4);
+  box-shadow:0 0 6px rgba(0,232,122,.5);
+}
+.term-cursor{
+  display:inline-block;width:8px;height:14px;
+  background:var(--green);
+  vertical-align:middle;
+  animation:blink .9s step-end infinite;
+  margin-left:1px;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── SECTION COMMONS ── */
+section{position:relative;z-index:1}
+.section-inner{
+  max-width:1200px;
+  margin:0 auto;
+  padding:0 clamp(20px,5vw,60px);
+}
+.section-label{
+  font-family:var(--font-code);
+  font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--green);
+  margin-bottom:14px;
+  display:flex;align-items:center;gap:8px;
+}
+.section-label::before{
+  content:'';display:block;
+  width:24px;height:1px;
+  background:var(--green);
+  opacity:.6;
+}
+.section-title{
+  font-size:clamp(28px,3.5vw,42px);
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:14px;
+}
+.section-sub{
+  font-size:16px;color:var(--text2);
+  line-height:1.7;max-width:580px;
+}
+
+/* ── DIVIDER LINE ── */
+.divider{
+  border:none;
+  border-top:1px solid var(--border);
+  margin:0;
+}
+
+/* ── WORKFLOW ── */
+.workflow{padding:100px 0}
+.workflow-steps{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0;
+  margin-top:60px;
+  position:relative;
+}
+.workflow-steps::before{
+  content:'';
+  position:absolute;
+  top:16px;
+  left:16px;
+  right:calc(33.33% - 16px);
+  height:1px;
+  background:linear-gradient(90deg,var(--border2),var(--green),var(--border2));
+  pointer-events:none;
+}
+.workflow-step{
+  padding:0 32px 0 0;
+  position:relative;
+}
+.workflow-step:last-child{padding-right:0}
+.step-num{
+  font-family:var(--font-code);
+  font-size:11px;
+  color:var(--green);
+  background:var(--green3);
+  border:1px solid rgba(0,232,122,.2);
+  width:32px;height:32px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:20px;
+  font-weight:600;
+  position:relative;z-index:1;
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--text2);
+}
+.step-num.active{
+  background:var(--green);
+  color:#000;
+  border-color:var(--green);
+  box-shadow:0 0 20px rgba(0,232,122,.3);
+}
+.step-title{
+  font-family:var(--font-head);
+  font-size:17px;font-weight:700;
+  color:var(--text);margin-bottom:10px;
+}
+.step-desc{font-size:14px;color:var(--text2);margin-bottom:16px;line-height:1.6}
+.step-code{
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:12px 14px;
+  font-family:var(--font-code);
+  font-size:12px;
+  color:var(--text2);
+  line-height:1.6;
+  overflow:hidden;
+}
+.step-code .cmd{color:var(--text)}
+.step-code .g{color:var(--green)}
+.step-code .b{color:#7aa2f7}
+.step-code .y{color:var(--yellow)}
+.step-code .d{color:var(--text3)}
+.step-arrow{
+  position:absolute;
+  top:10px;right:-8px;
+  color:var(--text3);
+  z-index:2;
+  font-size:18px;
+}
+
+/* ── FEATURES ── */
+.features{padding:100px 0}
+.features-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+  margin-top:56px;
+}
+.feat-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:28px;
+  transition:border-color .25s,transform .25s,box-shadow .25s;
+  cursor:default;
+  position:relative;
+  overflow:hidden;
+}
+.feat-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,232,122,.3),transparent);
+  opacity:0;
+  transition:opacity .3s;
+}
+.feat-card:hover{
+  border-color:rgba(0,232,122,.25);
+  transform:translateY(-3px);
+  box-shadow:0 12px 40px rgba(0,0,0,.3),0 0 0 1px rgba(0,232,122,.08);
+}
+.feat-card:hover::before{opacity:1}
+.feat-icon{
+  width:40px;height:40px;
+  background:var(--bg4);
+  border:1px solid var(--border);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:18px;
+  color:var(--green);
+  transition:background .25s,border-color .25s;
+}
+.feat-card:hover .feat-icon{
+  background:var(--green3);
+  border-color:rgba(0,232,122,.25);
+}
+.feat-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--font-code);font-size:10px;
+  color:var(--cyan);
+  background:rgba(0,212,255,.07);
+  border:1px solid rgba(0,212,255,.18);
+  padding:2px 8px;border-radius:20px;
+  margin-bottom:10px;
+}
+.feat-title{
+  font-family:var(--font-head);
+  font-size:16px;font-weight:700;
+  color:var(--text);margin-bottom:9px;
+}
+.feat-desc{font-size:13.5px;color:var(--text2);line-height:1.65;margin-bottom:14px}
+.feat-snippet{
+  font-family:var(--font-code);font-size:11.5px;
+  color:var(--text3);
+  background:var(--bg3);
+  border:1px solid var(--border);
+  padding:8px 11px;border-radius:var(--radius);
+  display:inline-block;
+}
+.feat-snippet .cmd{color:var(--text2)}
+
+/* ── MCP ── */
+.mcp{padding:100px 0}
+.mcp-inner{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:20px;
+  overflow:hidden;
+  position:relative;
+}
+.mcp-inner::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;bottom:0;
+  width:3px;
+  background:linear-gradient(180deg,var(--green),var(--cyan));
+}
+.mcp-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+}
+.mcp-left{padding:52px 48px 52px 52px;border-right:1px solid var(--border)}
+.mcp-right{padding:52px 52px 52px 48px}
+.mcp-tools{
+  margin-top:28px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.mcp-tool{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 16px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  transition:border-color .2s,background .2s;
+}
+.mcp-tool:hover{border-color:var(--border2);background:var(--bg4)}
+.mcp-tool-name{
+  font-family:var(--font-code);font-size:12.5px;
+  color:var(--green);font-weight:600;
+  min-width:160px;
+}
+.mcp-tool-desc{font-size:13px;color:var(--text2)}
+.mcp-tool-icon{
+  width:28px;height:28px;
+  background:var(--bg4);border:1px solid var(--border);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  color:var(--green);flex-shrink:0;
+}
+.mcp-right-title{
+  font-family:var(--font-head);
+  font-size:17px;font-weight:700;
+  color:var(--text);margin-bottom:6px;
+}
+.mcp-right-sub{font-size:13.5px;color:var(--text2);margin-bottom:22px;line-height:1.6}
+.code-block{
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+}
+.code-block-header{
+  background:var(--bg4);
+  padding:9px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--font-code);font-size:11.5px;color:var(--text3);
+}
+.code-block-copy{
+  background:none;border:none;
+  color:var(--text3);cursor:pointer;
+  font-family:var(--font-code);font-size:11px;
+  padding:2px 8px;border-radius:4px;
+  transition:color .2s,background .2s;
+  display:flex;align-items:center;gap:5px;
+}
+.code-block-copy:hover{color:var(--text2);background:rgba(255,255,255,.06)}
+.code-block pre{
+  padding:18px;
+  font-family:var(--font-code);
+  font-size:12.5px;line-height:1.75;
+  overflow-x:auto;
+  color:var(--text2);
+}
+.code-block .j-key{color:#7dcfff}
+.code-block .j-str{color:#9ece6a}
+.code-block .j-punc{color:var(--text3)}
+.mcp-cta{
+  margin-top:20px;
+  padding:14px 16px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+}
+.mcp-cta-label{font-size:12px;color:var(--text3);margin-bottom:6px}
+.mcp-cta-cmd{
+  font-family:var(--font-code);font-size:12.5px;
+  color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+}
+.mcp-cta-cmd .g{color:var(--green)}
+.btn-copy-inline{
+  background:none;border:none;
+  color:var(--text3);cursor:pointer;padding:2px 6px;
+  border-radius:4px;font-size:11px;
+  display:flex;align-items:center;gap:4px;
+  transition:color .2s;flex-shrink:0;
+}
+.btn-copy-inline:hover{color:var(--text2)}
+
+/* ── INSTALL ── */
+.install{padding:100px 0}
+.install-center{max-width:700px;margin:0 auto;text-align:center}
+.install-big-cmd{
+  background:var(--bg2);
+  border:1px solid var(--border2);
+  border-radius:var(--radius-lg);
+  padding:20px 24px;
+  margin:40px 0;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  cursor:pointer;
+  transition:border-color .2s,box-shadow .2s;
+  position:relative;
+  overflow:hidden;
+}
+.install-big-cmd::before{
+  content:'';position:absolute;
+  inset:-1px;border-radius:inherit;
+  background:linear-gradient(135deg,rgba(0,232,122,.12),transparent 60%);
+  pointer-events:none;
+}
+.install-big-cmd:hover{
+  border-color:rgba(0,232,122,.35);
+  box-shadow:var(--glow);
+}
+.install-big-cmd-text{
+  font-family:var(--font-code);font-size:16px;
+  color:var(--text);
+  display:flex;align-items:center;gap:10px;
+}
+.install-big-cmd-text .g{color:var(--green)}
+.install-big-cmd-hint{
+  font-size:12px;color:var(--text3);
+  white-space:nowrap;flex-shrink:0;
+  display:flex;align-items:center;gap:5px;
+}
+.install-big-cmd-hint svg{flex-shrink:0}
+
+.install-extras-title{
+  font-size:13px;color:var(--text2);margin-bottom:16px;
+  text-transform:uppercase;letter-spacing:.06em;
+  font-family:var(--font-code);font-size:11px;
+}
+.install-extras{
+  display:flex;flex-wrap:wrap;gap:8px;
+  justify-content:center;
+  margin-bottom:28px;
+}
+.extra-tag{
+  font-family:var(--font-code);font-size:12px;
+  color:var(--text2);
+  background:var(--bg2);
+  border:1px solid var(--border);
+  padding:6px 14px;border-radius:20px;
+  cursor:pointer;
+  transition:color .2s,border-color .2s,background .2s;
+  display:flex;align-items:center;gap:7px;
+}
+.extra-tag:hover,.extra-tag.active{
+  color:var(--green);
+  border-color:rgba(0,232,122,.3);
+  background:var(--green3);
+}
+.extra-tag-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:currentColor;opacity:.6;
+}
+.install-extra-cmd{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:12px 16px;
+  margin-bottom:28px;
+  font-family:var(--font-code);font-size:13px;
+  color:var(--text2);
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:46px;
+  transition:all .25s;
+}
+.install-extra-cmd .g{color:var(--green)}
+.quickstart{text-align:left;margin:0 auto;max-width:520px}
+.quickstart-title{
+  font-family:var(--font-code);
+  font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--text3);
+  margin-bottom:12px;
+}
+.quickstart-lines{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+}
+.qs-line{
+  padding:8px 16px;
+  font-family:var(--font-code);font-size:12.5px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid var(--border);
+  transition:background .2s;
+}
+.qs-line:last-child{border-bottom:none}
+.qs-line:hover{background:var(--bg3)}
+.qs-cmd{color:var(--text);flex:1}
+.qs-cmd .g{color:var(--green)}
+.qs-comment{font-size:11.5px;color:var(--text3)}
+.platforms{
+  display:flex;align-items:center;justify-content:center;gap:24px;
+  margin-top:40px;
+  font-size:13px;color:var(--text3);
+  flex-wrap:wrap;
+}
+.platform{display:flex;align-items:center;gap:7px}
+.platform-check{
+  width:17px;height:17px;
+  background:var(--green3);
+  border:1px solid rgba(0,232,122,.2);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--green);
+  flex-shrink:0;
+}
+
+/* ── FOOTER ── */
+footer{
+  border-top:1px solid var(--border);
+  padding:48px clamp(20px,5vw,60px) 40px;
+  position:relative;z-index:1;
+}
+.footer-inner{
+  max-width:1200px;margin:0 auto;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:40px;
+  margin-bottom:40px;
+}
+.footer-brand .nav-logo{margin-bottom:12px}
+.footer-brand p{font-size:13.5px;color:var(--text3);line-height:1.6;max-width:240px}
+.footer-col-title{
+  font-family:var(--font-head);
+  font-size:13px;font-weight:700;
+  color:var(--text2);
+  margin-bottom:14px;
+  letter-spacing:.02em;
+}
+.footer-links{display:flex;flex-direction:column;gap:8px}
+.footer-links a{
+  font-size:13.5px;color:var(--text3);
+  transition:color .2s;
+  display:flex;align-items:center;gap:7px;
+}
+.footer-links a:hover{color:var(--green)}
+.footer-bottom{
+  border-top:1px solid var(--border);
+  padding-top:24px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;
+}
+.footer-bottom-left{font-size:12.5px;color:var(--text3)}
+.footer-bottom-left span{color:var(--text2)}
+.footer-version{
+  font-family:var(--font-code);font-size:11px;
+  color:var(--text3);
+  background:var(--bg2);
+  border:1px solid var(--border);
+  padding:4px 10px;border-radius:20px;
+}
+
+/* ── SCROLL REVEAL ── */
+.reveal{
+  opacity:0;
+  transform:translateY(24px);
+  transition:opacity .6s ease,transform .6s ease;
+}
+.reveal.visible{
+  opacity:1;
+  transform:translateY(0);
+}
+.reveal-delay-1{transition-delay:.1s}
+.reveal-delay-2{transition-delay:.2s}
+.reveal-delay-3{transition-delay:.3s}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;
+  bottom:24px;right:24px;
+  background:var(--bg3);
+  border:1px solid rgba(0,232,122,.3);
+  color:var(--text);
+  font-family:var(--font-code);font-size:13px;
+  padding:10px 18px;
+  border-radius:var(--radius);
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+  z-index:1000;
+  display:flex;align-items:center;gap:8px;
+  transform:translateY(80px);
+  opacity:0;
+  transition:transform .3s ease,opacity .3s ease;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast .g{color:var(--green)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1024px){
+  .hero-inner{grid-template-columns:1fr;gap:48px}
+  .hero{min-height:auto;padding-top:100px;padding-bottom:60px}
+  .hero-sub{max-width:100%}
+  .workflow-steps{grid-template-columns:1fr;gap:40px}
+  .workflow-steps::before{display:none}
+  .step-arrow{display:none}
+  .features-grid{grid-template-columns:repeat(2,1fr)}
+  .mcp-grid{grid-template-columns:1fr}
+  .mcp-left{border-right:none;border-bottom:1px solid var(--border);padding:40px 32px}
+  .mcp-right{padding:40px 32px}
+  .footer-inner{grid-template-columns:1fr 1fr}
+}
+@media(max-width:768px){
+  .nav-links,.nav-actions{display:none}
+  .nav-hamburger{display:flex}
+  .features-grid{grid-template-columns:1fr}
+  .hero h1{font-size:34px}
+  .section-title{font-size:26px}
+  .footer-inner{grid-template-columns:1fr}
+  .footer-inner .footer-col:last-child{display:none}
+  .workflow-step{padding:0}
+  .mcp-tool-name{min-width:130px}
+}
+@media(max-width:480px){
+  .hero-ctas{flex-direction:column}
+  .btn-hero-primary,.btn-hero-secondary{justify-content:center}
+  .install-big-cmd{flex-direction:column;text-align:center}
+  .install-big-cmd-hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast">
+  <span class="g">✔</span> <span id="toast-msg">Copied to clipboard</span>
+</div>
+
+<!-- ── NAV ── -->
+<nav id="nav">
+  <div class="nav-logo">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green)">
+      <path d="M17 8h1a4 4 0 1 1 0 8h-1"/>
+      <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/>
+      <line x1="6" y1="2" x2="6" y2="4"/>
+      <line x1="10" y1="2" x2="10" y2="4"/>
+      <line x1="14" y1="2" x2="14" y2="4"/>
+    </svg>
+    AI<span>Tree</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#workflow">How It Works</a>
+    <a href="#mcp">MCP</a>
+    <a href="#install">Install</a>
+  </div>
+  <div class="nav-gap"></div>
+  <div class="nav-actions">
+    <a href="https://github.com/Paracci/aitree" target="_blank" rel="noopener">
+      <button class="btn-ghost">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.1.82-.26.82-.58v-2.02c-3.34.72-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75-1.08-.74.08-.72.08-.72 1.2.08 1.83 1.23 1.83 1.23 1.06 1.82 2.79 1.3 3.47.99.1-.77.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.17 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.005 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.65 1.65.24 2.87.12 3.17.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.83.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12"/></svg>
+        GitHub
+      </button>
+    </a>
+    <button class="btn-green" onclick="copyCmd('pip install paracci-aitree','Pip command copied!')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      pip install
+    </button>
+  </div>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile menu -->
+<div class="nav-mobile-menu" id="mobileMenu">
+  <a href="#features" onclick="closeMobile()">Features</a>
+  <a href="#workflow" onclick="closeMobile()">How It Works</a>
+  <a href="#mcp" onclick="closeMobile()">MCP</a>
+  <a href="#install" onclick="closeMobile()">Install</a>
+  <div class="nav-mobile-actions">
+    <a href="https://github.com/Paracci/aitree" target="_blank" rel="noopener">
+      <button class="btn-ghost" style="width:100%;justify-content:center">GitHub ↗</button>
+    </a>
+    <button class="btn-green" style="justify-content:center" onclick="copyCmd('pip install paracci-aitree','Pip command copied!')">
+      pip install paracci-aitree
+    </button>
+  </div>
+</div>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        v3.2.1 &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; Python 3.10+
+      </div>
+      <h1>Map your codebase.<br><em>Feed AI only</em><br>what it needs.</h1>
+      <p class="hero-sub">AITree generates an annotated file tree in one command. Paste it into any AI chat — let the AI ask for exactly the files it needs. Stop uploading everything.</p>
+      <div class="hero-ctas">
+        <button class="btn-hero-primary" onclick="copyCmd('pip install paracci-aitree','Copied! Run it in your terminal.')">
+          <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          pip install paracci-aitree
+        </button>
+        <a href="https://github.com/Paracci/aitree" target="_blank" rel="noopener">
+          <button class="btn-hero-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.1.82-.26.82-.58v-2.02c-3.34.72-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75-1.08-.74.08-.72.08-.72 1.2.08 1.83 1.23 1.83 1.23 1.06 1.82 2.79 1.3 3.47.99.1-.77.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.17 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.005 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.65 1.65.24 2.87.12 3.17.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.83.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12"/></svg>
+            View on GitHub
+          </button>
+        </a>
+      </div>
+      <div class="hero-trust">
+        <span>Works with</span>
+        <div class="hero-trust-dot"></div>
+        <span>Claude</span>
+        <div class="hero-trust-dot"></div>
+        <span>Cursor</span>
+        <div class="hero-trust-dot"></div>
+        <span>GPT-4</span>
+        <div class="hero-trust-dot"></div>
+        <span>Gemini</span>
+        <div class="hero-trust-dot"></div>
+        <span>any AI chat</span>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-terminal">
+        <div class="term-titlebar">
+          <div class="term-dot red"></div>
+          <div class="term-dot yellow"></div>
+          <div class="term-dot green"></div>
+          <div class="term-title">bash — ~/projects/webapp</div>
+        </div>
+        <div class="term-body" id="termBody" style="min-height:360px"></div>
+        <div class="term-scene-dots">
+          <div class="term-scene-dot active" id="sceneDot0"></div>
+          <div class="term-scene-dot" id="sceneDot1"></div>
+          <div class="term-scene-dot" id="sceneDot2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── WORKFLOW ── -->
+<section class="workflow" id="workflow">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">Three steps. That's the entire workflow.</h2>
+      <p class="section-sub">Stop the copy-paste nightmare of sharing files one by one. Map first, share precisely.</p>
+    </div>
+    <div class="workflow-steps">
+      <div class="workflow-step reveal reveal-delay-1">
+        <div class="step-num active">01</div>
+        <div class="step-title">Run one command.</div>
+        <div class="step-desc">Generate your entire project map and copy it to the clipboard in one shot.</div>
+        <div class="step-code">
+          <span class="g">$</span> <span class="cmd">aitree . --copy</span><br>
+          <span class="d">#</span><br>
+          <span class="d"># 4 dirs, 18 files (142KB)</span><br>
+          <span class="g">✔</span>  <span class="d">Copied to clipboard</span>
+        </div>
+      </div>
+      <div class="workflow-step reveal reveal-delay-2">
+        <div class="step-num active">02</div>
+        <div class="step-title">Paste the map.</div>
+        <div class="step-desc">Share the structure — not your source code. Let the AI understand your project layout first.</div>
+        <div class="step-code">
+          <span class="d">You:</span> <span class="cmd">Here's my project map.</span><br>
+          <span class="d">     Which files do you need?</span><br><br>
+          <span class="d">AI:</span>  <span class="b">Please share</span><br>
+          <span class="d">     src/auth/login.py</span><br>
+          <span class="d">     and models/user.py</span>
+        </div>
+      </div>
+      <div class="workflow-step reveal reveal-delay-3">
+        <div class="step-num active">03</div>
+        <div class="step-title">Send only what's needed.</div>
+        <div class="step-desc">The AI works with surgical precision. No noise, no wasted tokens, faster and better answers.</div>
+        <div class="step-code">
+          <span class="g">$</span> <span class="cmd">cat src/auth/login.py</span><br>
+          <span class="d">→ 2 files · 3.2KB total</span><br>
+          <span class="d">→ not the whole codebase</span><br>
+          <span class="y">→ AI answers precisely ✦</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── FEATURES ── -->
+<section class="features" id="features">
+  <div class="section-inner">
+    <div class="reveal">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything a developer needs.</h2>
+      <p class="section-sub">From quick clipboard copy to full MCP server integration — AITree fits into any AI workflow.</p>
+    </div>
+    <div class="features-grid">
+
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div class="feat-title">Multiple Output Formats</div>
+        <div class="feat-desc">Plain text for pasting, JSON for tooling, Markdown for docs. Pick what your workflow needs.</div>
+        <div class="feat-snippet"><span class="cmd">--format text | json | markdown</span></div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon" style="color:var(--cyan)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="feat-title">GitHub URL Support</div>
+        <div class="feat-desc">Scan any public or private GitHub repository without cloning. Works entirely via the GitHub API.</div>
+        <div class="feat-snippet"><span class="cmd">aitree https://github.com/owner/repo</span></div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon" style="color:var(--yellow)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="feat-title">Interactive Web UI</div>
+        <div class="feat-desc">Full browser explorer: collapsible tree, file preview with syntax highlighting, search, and live reload.</div>
+        <div class="feat-snippet"><span class="cmd">aitree . --serve</span></div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </div>
+        <div class="feat-badge">Claude · Cursor</div>
+        <div class="feat-title">MCP Server</div>
+        <div class="feat-desc">Native AI assistant integration. Let Claude Desktop or Cursor read and navigate your file tree directly as a tool.</div>
+        <div class="feat-snippet"><span class="cmd">aitree-mcp</span></div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon" style="color:#7dcfff">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <div class="feat-title">Live Watch Mode</div>
+        <div class="feat-desc">Watches your project in real time. Filters false positives with content hashing and 1-second debounce.</div>
+        <div class="feat-snippet"><span class="cmd">aitree . --live</span></div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon" style="color:#bb9af7">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        </div>
+        <div class="feat-title">Smart Filtering</div>
+        <div class="feat-desc">Depth limits, glob include/exclude patterns, git-changed-only mode. Respects .gitignore and .aitreeignore automatically.</div>
+        <div class="feat-snippet"><span class="cmd">--depth 2 --include "*.py" --git-changed</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── MCP ── -->
+<section class="mcp" id="mcp">
+  <div class="section-inner">
+    <div class="reveal" style="margin-bottom:40px">
+      <div class="section-label">MCP Integration</div>
+      <h2 class="section-title">First-class AI assistant support.</h2>
+      <p class="section-sub">AITree ships an MCP server. Claude Desktop and Cursor can call it as a native tool — no shell, no copy-paste, no context switching.</p>
+    </div>
+    <div class="mcp-inner reveal">
+      <div class="mcp-grid">
+        <div class="mcp-left">
+          <div style="font-family:var(--font-head);font-size:20px;font-weight:700;color:var(--text);margin-bottom:8px">Four tools. Full access.</div>
+          <div style="font-size:14px;color:var(--text2);line-height:1.6">The MCP server exposes your project as a structured, queryable API. The AI navigates it like a filesystem — reading only what it needs.</div>
+          <div class="mcp-tools">
+            <div class="mcp-tool">
+              <div class="mcp-tool-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 3v4"/><path d="M3 21V9"/></svg>
+              </div>
+              <div class="mcp-tool-name">aitree_get_tree</div>
+              <div class="mcp-tool-desc">Full project structure for any local path or GitHub URL</div>
+            </div>
+            <div class="mcp-tool">
+              <div class="mcp-tool-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16"/><polyline points="14 2 14 8 20 8"/></svg>
+              </div>
+              <div class="mcp-tool-name">aitree_read_file</div>
+              <div class="mcp-tool-desc">Read any file's contents on demand — without leaving the conversation</div>
+            </div>
+            <div class="mcp-tool">
+              <div class="mcp-tool-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </div>
+              <div class="mcp-tool-name">aitree_get_stats</div>
+              <div class="mcp-tool-desc">Structured JSON codebase statistics by extension, size, and token count</div>
+            </div>
+            <div class="mcp-tool">
+              <div class="mcp-tool-icon">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+              </div>
+              <div class="mcp-tool-name">aitree_get_changed</div>
+              <div class="mcp-tool-desc">List git-changed and untracked files in the current repository</div>
+            </div>
+          </div>
+        </div>
+        <div class="mcp-right">
+          <div class="mcp-right-title">Setup in 30 seconds</div>
+          <div class="mcp-right-sub">Install the MCP dependency, add one config block, and Claude Desktop is ready.</div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span>claude_desktop_config.json</span>
+              <button class="code-block-copy" onclick="copyCmd('{&quot;mcpServers&quot;:{&quot;aitree&quot;:{&quot;command&quot;:&quot;aitree-mcp&quot;}}}','Config copied!')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+              </button>
+            </div>
+            <pre><span class="j-punc">{</span>
+  <span class="j-key">"mcpServers"</span><span class="j-punc">:</span> <span class="j-punc">{</span>
+    <span class="j-key">"aitree"</span><span class="j-punc">:</span> <span class="j-punc">{</span>
+      <span class="j-key">"command"</span><span class="j-punc">:</span> <span class="j-str">"aitree-mcp"</span>
+    <span class="j-punc">}</span>
+  <span class="j-punc">}</span>
+<span class="j-punc">}</span></pre>
+          </div>
+          <div class="mcp-cta">
+            <div class="mcp-cta-label">Install MCP dependency first</div>
+            <div class="mcp-cta-cmd">
+              <span><span class="g">$</span> pip install "paracci-aitree[<span class="g">mcp</span>]"</span>
+              <button class="btn-copy-inline" onclick="copyCmd('pip install &quot;paracci-aitree[mcp]&quot;','MCP install command copied!')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ── INSTALL ── -->
+<section class="install" id="install">
+  <div class="section-inner">
+    <div class="install-center">
+      <div class="reveal">
+        <div class="section-label" style="justify-content:center">Get started</div>
+        <h2 class="section-title">Up and running in seconds.</h2>
+        <p class="section-sub" style="margin:0 auto">No configuration required. Works on every platform. Python 3.10+ is all you need.</p>
+      </div>
+      <div class="reveal">
+        <div class="install-big-cmd" onclick="copyCmd('pip install paracci-aitree','Pip command copied!')" title="Click to copy">
+          <div class="install-big-cmd-text">
+            <span style="color:var(--text3)">$</span>
+            <span>pip install <span class="g">paracci-aitree</span></span>
+          </div>
+          <div class="install-big-cmd-hint">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Click to copy
+          </div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="install-extras-title">Optional extras — install only what you need</div>
+        <div class="install-extras">
+          <div class="extra-tag active" data-pkg="live" data-desc="watchdog — enables --live watch mode" onclick="selectExtra(this)">
+            <span class="extra-tag-dot"></span>live
+          </div>
+          <div class="extra-tag" data-pkg="tokens" data-desc="tiktoken — accurate token counting" onclick="selectExtra(this)">
+            <span class="extra-tag-dot"></span>tokens
+          </div>
+          <div class="extra-tag" data-pkg="git" data-desc="gitpython — --git-changed mode" onclick="selectExtra(this)">
+            <span class="extra-tag-dot"></span>git
+          </div>
+          <div class="extra-tag" data-pkg="mcp" data-desc="mcp — MCP server for AI assistants" onclick="selectExtra(this)">
+            <span class="extra-tag-dot"></span>mcp
+          </div>
+          <div class="extra-tag" data-pkg="all" data-desc="everything + pyperclip clipboard" onclick="selectExtra(this)">
+            <span class="extra-tag-dot"></span>all
+          </div>
+        </div>
+        <div class="install-extra-cmd" id="extraCmd">
+          <span><span class="g">$</span> pip install "paracci-aitree[<span class="g">live</span>]"</span>
+          <button class="btn-copy-inline" id="extraCopyBtn" onclick="copyExtraCmd()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="quickstart">
+          <div class="quickstart-title">Quick start</div>
+          <div class="quickstart-lines">
+            <div class="qs-line">
+              <div class="qs-cmd"><span class="g">$</span> aitree .</div>
+              <div class="qs-comment">print tree to stdout</div>
+            </div>
+            <div class="qs-line">
+              <div class="qs-cmd"><span class="g">$</span> aitree . --copy</div>
+              <div class="qs-comment">copy to clipboard</div>
+            </div>
+            <div class="qs-line">
+              <div class="qs-cmd"><span class="g">$</span> aitree . --serve</div>
+              <div class="qs-comment">open web UI in browser</div>
+            </div>
+            <div class="qs-line">
+              <div class="qs-cmd"><span class="g">$</span> aitree . --live</div>
+              <div class="qs-comment">watch for changes</div>
+            </div>
+            <div class="qs-line">
+              <div class="qs-cmd"><span class="g">$</span> aitree https://github.com/owner/repo</div>
+              <div class="qs-comment">scan GitHub repo</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="platforms reveal">
+        <div class="platform">
+          <div class="platform-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          Linux
+        </div>
+        <div class="platform">
+          <div class="platform-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          macOS
+        </div>
+        <div class="platform">
+          <div class="platform-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          Windows
+        </div>
+        <div class="platform">
+          <div class="platform-check"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+          WSL
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nav-logo" style="margin-bottom:12px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green)"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+        AI<span style="color:var(--green)">Tree</span>
+      </div>
+      <p>Project file map generator for AI-assisted development. Built for developers who work with AI.</p>
+    </div>
+    <div>
+      <div class="footer-col-title">Project</div>
+      <div class="footer-links">
+        <a href="https://github.com/Paracci/aitree" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.1.82-.26.82-.58v-2.02c-3.34.72-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75-1.08-.74.08-.72.08-.72 1.2.08 1.83 1.23 1.83 1.23 1.06 1.82 2.79 1.3 3.47.99.1-.77.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.17 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.005 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.65 1.65.24 2.87.12 3.17.77.84 1.23 1.91 1.23 3.22 0 4.61-2.8 5.63-5.48 5.92.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.83.58C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12"/></svg>
+          GitHub
+        </a>
+        <a href="https://pypi.org/project/paracci-aitree/" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          PyPI
+        </a>
+        <a href="https://github.com/Paracci/aitree/issues" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Issues
+        </a>
+        <a href="https://github.com/Paracci/aitree/blob/main/LICENSE" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+          MIT License
+        </a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <div class="footer-col-title">Install</div>
+      <div class="footer-links">
+        <a href="#install">pip install paracci-aitree</a>
+        <a href="#install">Optional extras</a>
+        <a href="#mcp">MCP server setup</a>
+        <a href="#workflow">Quick start</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-bottom-left">
+      © 2026 <span>Paracci</span> · MIT License
+    </div>
+    <div class="footer-version">v3.2.1</div>
+  </div>
+</footer>
+
+<script>
+// ── NAV ──
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>20);
+});
+document.getElementById('hamburger').addEventListener('click',()=>{
+  document.getElementById('mobileMenu').classList.toggle('open');
+});
+function closeMobile(){document.getElementById('mobileMenu').classList.remove('open')}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function copyCmd(cmd,msg){
+  const clean=cmd.replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+  navigator.clipboard.writeText(clean).then(()=>showToast(msg||'Copied!')).catch(()=>showToast('Copy failed'));
+}
+
+// ── EXTRAS ──
+const extraData={
+  live:  'pip install "paracci-aitree[live]"',
+  tokens:'pip install "paracci-aitree[tokens]"',
+  git:   'pip install "paracci-aitree[git]"',
+  mcp:   'pip install "paracci-aitree[mcp]"',
+  all:   'pip install "paracci-aitree[all]"',
+};
+function selectExtra(el){
+  document.querySelectorAll('.extra-tag').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  const pkg=el.dataset.pkg;
+  const cmd=extraData[pkg];
+  const display=`<span class="g">$</span> pip install "paracci-aitree[<span class="g">${pkg}</span>]"`;
+  document.getElementById('extraCmd').innerHTML=display+`<button class="btn-copy-inline" onclick="copyExtraCmd()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>`;
+  document.getElementById('extraCmd').dataset.cmd=cmd;
+}
+function copyExtraCmd(){
+  const el=document.getElementById('extraCmd');
+  const active=document.querySelector('.extra-tag.active');
+  if(!active)return;
+  const pkg=active.dataset.pkg;
+  copyCmd(`pip install "paracci-aitree[${pkg}]"`,'Extra command copied!');
+}
+
+// ── SCROLL REVEAL ──
+const revealEls=document.querySelectorAll('.reveal');
+const revealObs=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');revealObs.unobserve(e.target);}});
+},{threshold:.12});
+revealEls.forEach(el=>revealObs.observe(el));
+
+// ── TERMINAL ANIMATION ──
+const scenes=[
+  // ── Scene 1: aitree . --copy ──
+  [
+    {type:'prompt',text:'aitree . --copy'},
+    {type:'blank'},
+    {type:'dir',text:'aitree/'},
+    {type:'tree',text:'├── aitree/',color:'dir'},
+    {type:'tree',text:'│   ├── __init__.py',size:'1KB'},
+    {type:'tree',text:'│   ├── cli.py',size:'12KB'},
+    {type:'tree',text:'│   ├── tree.py',size:'8KB'},
+    {type:'tree',text:'│   ├── formatter.py',size:'6KB'},
+    {type:'tree',text:'│   ├── server.py',size:'9KB'},
+    {type:'tree',text:'│   └── mcp_server.py',size:'5KB'},
+    {type:'tree',text:'├── tests/',color:'dir'},
+    {type:'tree',text:'│   ├── test_tree.py',size:'4KB'},
+    {type:'tree',text:'│   └── test_cli.py',size:'3KB'},
+    {type:'tree',text:'├── pyproject.toml',size:'2KB'},
+    {type:'tree',text:'└── README.md',size:'14KB'},
+    {type:'blank'},
+    {type:'comment',text:'# 3 directories, 10 files  (64KB total)'},
+    {type:'comment',text:'#'},
+    {type:'comment',text:'# File types:'},
+    {type:'comment',text:'#   .py      8   ████████'},
+    {type:'comment',text:'#   .toml    1   █'},
+    {type:'comment',text:'#   .md      1   █'},
+    {type:'blank'},
+    {type:'ok',text:'✔  Copied to clipboard'},
+  ],
+  // ── Scene 2: GitHub scanning ──
+  [
+    {type:'prompt',text:'aitree https://github.com/Paracci/aitree'},
+    {type:'blank'},
+    {type:'info',text:'→ Connecting to GitHub...'},
+    {type:'info',text:'→ paracci/aitree  ·  ★ 248  ·  Python'},
+    {type:'blank'},
+    {type:'dir',text:'aitree/'},
+    {type:'tree',text:'├── aitree/',color:'dir'},
+    {type:'tree',text:'│   ├── cli.py',size:'12KB'},
+    {type:'tree',text:'│   ├── tree.py',size:'8KB'},
+    {type:'tree',text:'│   ├── formatter.py',size:'6KB'},
+    {type:'tree',text:'│   └── mcp_server.py',size:'5KB'},
+    {type:'tree',text:'├── tests/',color:'dir'},
+    {type:'tree',text:'│   └── test_tree.py',size:'4KB'},
+    {type:'tree',text:'├── pyproject.toml',size:'2KB'},
+    {type:'tree',text:'└── README.md',size:'14KB'},
+    {type:'blank'},
+    {type:'comment',text:'# 2 directories, 7 files  (51KB)'},
+    {type:'blank'},
+    {type:'ok',text:'✔  Done  ·  no clone needed'},
+  ],
+  // ── Scene 3: --live mode ──
+  [
+    {type:'prompt',text:'aitree . --live'},
+    {type:'blank'},
+    {type:'info',text:'→ Watching ~/projects/aitree'},
+    {type:'info',text:'→ Press Ctrl+C to stop'},
+    {type:'blank'},
+    {type:'event',text:'[14:02:11]',event:'CHANGED',file:'aitree/formatter.py',color:'change'},
+    {type:'treeupdate',text:'           Tree updated — 10 files (64KB)'},
+    {type:'blank'},
+    {type:'event',text:'[14:02:34]',event:'ADDED',file:'aitree/utils/cache.py',color:'add'},
+    {type:'treeupdate',text:'           Tree updated — 11 files (66KB)'},
+    {type:'blank'},
+    {type:'event',text:'[14:03:07]',event:'DELETED',file:'tests/old_test.py',color:'del'},
+    {type:'treeupdate',text:'           Tree updated — 10 files (63KB)'},
+    {type:'blank'},
+    {type:'watching',text:'● Live  ·  3 events  ·  watching...'},
+  ],
+];
+
+const termBody=document.getElementById('termBody');
+let sceneIdx=0;
+let lineIdx=0;
+let restartTimer=null;
+
+function updateSceneDots(){
+  document.querySelectorAll('.term-scene-dot').forEach((d,i)=>{
+    d.classList.toggle('active',i===sceneIdx);
+  });
+}
+
+function renderLine(frame){
+  const d=document.createElement('div');
+  if(frame.type==='blank'){
+    d.innerHTML='&nbsp;';termBody.appendChild(d);scheduleNext(20);return;
+  }
+  if(frame.type==='prompt'){
+    d.innerHTML=`<span class="term-prompt">$ </span><span class="term-cmd"></span><span class="term-cursor"></span>`;
+    termBody.appendChild(d);
+    typeInto(d.querySelector('.term-cmd'),frame.text,d.querySelector('.term-cursor'));
+    return;
+  }
+  if(frame.type==='dir'){
+    d.innerHTML=`<span class="term-dir">${escHtml(frame.text)}</span>`;
+    termBody.appendChild(d);scheduleNext(30);return;
+  }
+  if(frame.type==='tree'){
+    const pre=escHtml(frame.text);
+    const size=frame.size?`  <span class="term-size">[${frame.size}]</span>`:'';
+    const col=frame.color==='dir'?'term-dir':'term-file';
+    d.innerHTML=`<span class="${col}">${pre}</span>${size}`;
+    termBody.appendChild(d);scheduleNext(25);return;
+  }
+  if(frame.type==='comment'){
+    d.innerHTML=`<span class="term-comment">${escHtml(frame.text)}</span>`;
+    termBody.appendChild(d);scheduleNext(20);return;
+  }
+  if(frame.type==='info'){
+    d.innerHTML=`<span class="term-info">${escHtml(frame.text)}</span>`;
+    termBody.appendChild(d);scheduleNext(38);return;
+  }
+  if(frame.type==='event'){
+    const cc=frame.color==='change'?'term-ev-change':frame.color==='add'?'term-ev-add':'term-ev-del';
+    const sym=frame.color==='change'?'~':frame.color==='add'?'+':'-';
+    d.innerHTML=`<span class="term-ts">${escHtml(frame.text)}</span> <span class="${cc}">${sym} ${escHtml(frame.event)}</span>  <span class="term-file">${escHtml(frame.file)}</span>`;
+    termBody.appendChild(d);scheduleNext(90);return;
+  }
+  if(frame.type==='treeupdate'){
+    d.innerHTML=`<span class="term-comment">${escHtml(frame.text)}</span>`;
+    termBody.appendChild(d);scheduleNext(30);return;
+  }
+  if(frame.type==='watching'){
+    d.innerHTML=`<span class="term-watch-ok">${escHtml(frame.text)}</span>`;
+    termBody.appendChild(d);
+    restartTimer=setTimeout(nextScene,3200);return;
+  }
+  if(frame.type==='ok'){
+    d.innerHTML=`<span class="term-ok">${escHtml(frame.text)}</span>`;
+    termBody.appendChild(d);
+    restartTimer=setTimeout(nextScene,3200);return;
+  }
+  termBody.appendChild(d);scheduleNext(20);
+}
+
+function nextScene(){
+  sceneIdx=(sceneIdx+1)%scenes.length;
+  termBody.innerHTML='';
+  lineIdx=0;
+  updateSceneDots();
+  setTimeout(()=>renderLine(scenes[sceneIdx][0]),420);
+}
+
+function scheduleNext(delay){
+  setTimeout(()=>{
+    lineIdx++;
+    const scene=scenes[sceneIdx];
+    if(lineIdx<scene.length)renderLine(scene[lineIdx]);
+    termBody.scrollTop=termBody.scrollHeight;
+  },delay);
+}
+
+function typeInto(el,text,cursor){
+  let i=0;
+  function tick(){
+    if(i<text.length){
+      el.textContent+=text[i++];
+      termBody.scrollTop=termBody.scrollHeight;
+      setTimeout(tick,i===1?80:42+Math.random()*18);
+    }else{
+      if(cursor)cursor.remove();
+      scheduleNext(60);
+    }
+  }
+  tick();
+}
+
+function escHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+updateSceneDots();
+setTimeout(()=>renderLine(scenes[0][0]),800);
+</script>
+</body>
+</html>
